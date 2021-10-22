@@ -11,12 +11,11 @@ class TextGenModel(keras.Model):
         self.dense = layers.Dense(vocab_size)
 
     def call(self, inputs, states=None, return_state=False, training=False):
-        x = inputs
-
-        x = self.embedding(x, training=training)
+        x = self.embedding(inputs, training=training)
+        mask = self.embedding.compute_mask(inputs)
         if states is None:
             states = self.gru.get_initial_state(x)
-        x, states = self.gru(x, initial_state=states, training=training)
+        x, states = self.gru(x, initial_state=states, training=training, mask=mask)
         x = self.dense(x, training=training)
 
         if return_state:
@@ -40,9 +39,10 @@ class TextGenServingModel(keras.Model):
     )
     def call(self, inputs):
         x, states = inputs
+        mask = self.embedding.compute_mask(x)
         x = self.embedding(x, training=False)
         if states is None:
             states = self.gru.get_initial_state(x)
-        x, states = self.gru(x, initial_state=states, training=False)
+        x, states = self.gru(x, initial_state=states, training=False, mask=mask)
         x = self.dense(x, training=False)
         return x, states
