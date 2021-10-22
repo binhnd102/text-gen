@@ -45,4 +45,7 @@ class TextGenServingModel(keras.Model):
             states = self.gru.get_initial_state(x)
         x, states = self.gru(x, initial_state=states, training=False, mask=mask)
         x = self.dense(x, training=False)
+        perm_x = tf.transpose(x, perm=[1, 0, 2])
+        # trim the mask and revert
+        x = tf.transpose(perm_x[mask[0]], perm=[1, 0, 2])
         return x, states
